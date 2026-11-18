@@ -10,10 +10,19 @@ const dictionaries = {
 window.__ModuleLoader__.load({
   id: packageName,
   factory(require) {
-    const { createElement: h, useEffect, useId, useRef, useState, useSyncExternalStore } = require('react');
+    const { Fragment: ReactFragment, createElement: h, useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore } = require('react');
 
     function SpeedControl({ sessionId, api, locked, reportFailure, t }) {
       const id = useId();
+      const trigger = useRef(null);
+      const [expanded, setExpanded] = useState(false);
+      const [classes, setClasses] = useState([]);
+      useLayoutEffect(() => {
+        const row = trigger.current?.closest('[role="menu"]')?.querySelector('button[role="menuitem"]');
+        if (row && row !== trigger.current) {
+          setClasses([row.className, ...Array.from(row.children, child => child.getAttribute('class'))]);
+        }
+      }, []);
       const [mode, setMode] = useState(null);
       const [busy, setBusy] = useState(false);
       const [readFailed, setReadFailed] = useState(false);
@@ -42,21 +51,36 @@ window.__ModuleLoader__.load({
         }
       }
 
-      return h('div', {
-        role: 'group', 'aria-labelledby': id,
-        style: { padding: '6px 10px', minInlineSize: 0 },
-      }, h('span', { id }, t('speed')),
-      mode === null
-        ? h('span', { role: 'status' }, t(readFailed ? 'readFailed' : 'loading'))
-        : h('div', { style: { display: 'flex', gap: 12, flexWrap: 'wrap' } }, ...['normal', 'fast'].map(option => {
-          const checked = option === 'normal' ? mode === 'standard' : mode !== 'standard';
-          return h('button', {
-            key: option, type: 'button', role: 'menuitemradio', tabIndex: -1,
-            'aria-checked': checked, 'aria-disabled': busy || undefined, disabled: locked,
-            style: { font: 'inherit', color: 'inherit', padding: '2px 8px', border: '1px solid var(--dsw-alias-border-default, currentColor)', borderRadius: 6, background: 'transparent', fontWeight: checked ? 600 : 400 },
-            onClick: () => { if (!checked) void select(option); },
-          }, `${checked ? '✓ ' : ''}${t(option)}`);
-        })));
+      const [rowClass, labelClass, valueClass, iconClass] = classes;
+      const current = mode === 'standard' ? 'normal' : 'fast';
+      function closeOptions() {
+        setExpanded(false);
+        trigger.current?.focus();
+      }
+      return h(ReactFragment, null,
+        h('button', {
+          ref: trigger, id, type: 'button', role: 'menuitem', className: rowClass,
+          'aria-expanded': expanded, 'aria-controls': expanded ? `${id}-options` : undefined,
+          onClick: () => setExpanded(value => !value),
+        }, h('span', { className: labelClass }, t('speed')),
+        h('span', { className: valueClass }, mode === null ? t(readFailed ? 'readFailed' : 'loading') : t(current)),
+        h('svg', { className: iconClass, width: 12, height: 12, viewBox: '0 0 12 12', 'aria-hidden': true,
+          style: expanded ? { transform: 'rotate(90deg)' } : undefined },
+        h('path', { d: 'm4.5 2.5 3.5 3.5-3.5 3.5', fill: 'none', stroke: 'currentColor', strokeLinecap: 'round', strokeLinejoin: 'round' }))),
+        expanded && mode !== null && h('div', {
+          id: `${id}-options`, role: 'group', 'aria-labelledby': id,
+          onKeyDown: event => {
+            if (event.key !== 'Escape' && event.key !== 'ArrowLeft') return;
+            event.preventDefault();
+            event.stopPropagation();
+            closeOptions();
+          },
+        }, ...['normal', 'fast'].map(option => h('button', {
+          key: option, type: 'button', role: 'menuitemradio', className: rowClass,
+          'aria-checked': current === option, disabled: locked || busy,
+          onClick: () => { if (current !== option) void select(option); closeOptions(); },
+        }, h('span', { className: labelClass, style: { paddingInlineStart: 12 } }, t(option)),
+        h('span', { className: valueClass, 'aria-hidden': true }, current === option ? '✓' : '')))));
     }
 
     function ModelOption({ directory, ...props }) {
