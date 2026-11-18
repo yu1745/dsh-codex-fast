@@ -1,9 +1,5 @@
-# Codex Fast
+# Codex 快速模式
 
-Open the model selector in a Codex conversation and choose **Normal** or **Fast** under **Codex speed**. Fast requests the priority service tier on subsequent requests. The upstream provider decides whether to honor it.
+选中 Codex 模型后，可以在模型选择器的推理等级下方切换「普通」和「快速」。快速模式会为后续请求申请优先服务等级，是否生效由模型提供方决定。
 
-The choice is stored per conversation. New child conversations inherit it. `/fast` toggles Fast, and `/ultrafast` preserves the legacy command. The two-option control shows a legacy UltraFast choice as Fast until you switch back to Normal.
-
-This standalone bundle replaces the `yu-codex-fast` entry of the legacy DSH Extensions bundle. When migrating, remove the legacy speed entry and its composer control to avoid registering the same commands twice. Existing per-conversation settings are preserved.
-
-Compatible with DSH `0.2.2-rc.3`. Build with `npm ci --ignore-scripts` and `npm run build`. Run tests with `npm test`.
+速度设置按会话保存，新建子会话会继承父会话的设置。也可以用 `/fast` 切换快速模式，或用 `/ultrafast` 切换极速模式。已启用极速模式的会话会显示为「快速」，切回「普通」即可关闭。
