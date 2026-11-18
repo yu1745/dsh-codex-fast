@@ -1,15 +1,53 @@
 {
   "name": "@yu1745/dsh-codex-fast",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Per-conversation Codex speed settings in the DSH model selector",
   "type": "module",
   "license": "MIT",
   "author": "yu1745",
-  "engines": { "node": ">=22", "dsh": "^0.2.2-rc.3" },
-  "exports": { ".": "./index.js", "./package.json": "./package.json", "./client": "./client.js", "./locale/*.json": "./locale/*.json", "./icon": "./icon.svg" },
-  "files": ["index.js", "client.js", "src", "cordis.patch.yml", "locale", "icon.svg", "README.md", "LICENSE"],
-  "dsh": { "bundle": { "patch": ["./cordis.patch.yml"] }, "client": { "platform": "web", "inject": ["@deepseek-ai/dsh-client-ui-model-selection"] } },
-  "dependencies": { "@deepseek-ai/dsh-typert-protocol": "0.2.2-rc.3", "zod": "4.6.6" },
-  "devDependencies": { "esbuild": "0.28.2" },
-  "scripts": { "build": "esbuild src/client.js --bundle --format=iife --platform=browser --minify --outfile=client.js", "test": "node --test" }
+  "engines": {
+    "node": ">=22",
+    "dsh": "^0.2.2-rc.3"
+  },
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "src",
+    "cordis.patch.yml",
+    "locale",
+    "icon.svg",
+    "README.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": [
+        "./cordis.patch.yml"
+      ]
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-model-selection"
+      ]
+    }
+  },
+  "dependencies": {
+    "@deepseek-ai/dsh-typert-protocol": "0.2.2-rc.3",
+    "zod": "4.6.6"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  },
+  "scripts": {
+    "build": "esbuild src/client.js --bundle --format=iife --platform=browser --minify --outfile=client.js",
+    "test": "node --test"
+  }
 }

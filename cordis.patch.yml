@@ -1,3 +1,3 @@
 - insert:
-    - id: yu-codex-fast
+    - id: yu-standalone-codex-fast
       name: '@yu1745/dsh-codex-fast'
