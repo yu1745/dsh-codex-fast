@@ -10,17 +10,11 @@ const dictionaries = {
 window.__ModuleLoader__.load({
   id: packageName,
   factory(require) {
-    const { createElement: h, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } = require('react');
+    const { createElement: h, useEffect, useRef, useState, useSyncExternalStore } = require('react');
+
+    const { Switch } = require('@deepseek-ai/dsh-client-ui-primitives');
 
     function SpeedControl({ sessionId, api, locked, reportFailure, t }) {
-      const trigger = useRef(null);
-      const [classes, setClasses] = useState([]);
-      useLayoutEffect(() => {
-        const row = trigger.current?.closest('[role="menu"]')?.querySelector('button[role="menuitem"]');
-        if (row && row !== trigger.current) {
-          setClasses([row.className, ...Array.from(row.children, child => child.getAttribute('class'))]);
-        }
-      }, []);
       const [mode, setMode] = useState(null);
       const [busy, setBusy] = useState(false);
       const [readFailed, setReadFailed] = useState(false);
@@ -49,26 +43,13 @@ window.__ModuleLoader__.load({
         }
       }
 
-      const [rowClass, labelClass, valueClass] = classes;
       const checked = mode === 'fast' || mode === 'ultrafast';
-      const blocked = locked || busy || mode === null;
-      return h('button', {
-        ref: trigger, type: 'button', role: 'switch', className: rowClass,
-        'aria-checked': checked, 'aria-disabled': blocked || undefined,
-        title: mode === null ? t(readFailed ? 'readFailed' : 'loading') : undefined,
-        onClick: () => { if (!blocked) void select(!checked); },
-      }, h('span', { className: labelClass }, t('speed')),
-      h('span', { className: valueClass, 'aria-hidden': true }),
-      h('span', {
-        'aria-hidden': true,
-        style: {
-          display: 'inline-flex', alignItems: 'center', flex: 'none',
-          width: 36, height: 20, padding: 2, boxSizing: 'border-box', borderRadius: 999,
-          background: checked ? 'var(--dsw-alias-label-primary, #202127)' : 'color-mix(in srgb, currentColor 15%, transparent)',
-          justifyContent: checked ? 'flex-end' : 'flex-start',
-          opacity: blocked ? 0.55 : 1,
-        },
-      }, h('span', { style: { width: 16, height: 16, borderRadius: '50%', background: 'var(--dsw-alias-background-primary, white)' } })));
+      return h('div', { className: 'yu-codex-speed-row', title: mode === null ? t(readFailed ? 'readFailed' : 'loading') : undefined },
+        h('span', null, t('speed')),
+        h(Switch, {
+          className: 'yu-codex-speed-switch', label: t('speed'), checked,
+          disabled: locked || busy || mode === null, onChange: select,
+        }));
     }
 
     function ModelOption({ directory, ...props }) {
@@ -79,6 +60,18 @@ window.__ModuleLoader__.load({
     return {
       inject: ['slots', 'remote', 'locale', 'modelDirectories'],
       async apply(ctx) {
+        ctx.effect(() => {
+          const style = document.createElement('style');
+          style.textContent = `
+            .yu-codex-speed-row { border-radius: var(--dsw-radius-md); min-height: 34px; color: var(--dsw-alias-label-primary); justify-content: space-between; align-items: center; gap: 16px; padding: 0 8px; font-size: 13px; line-height: 20px; display: flex; position: relative; }
+            .yu-codex-speed-row .yu-codex-speed-switch { position: static; }
+            .yu-codex-speed-switch::after { content: ''; border-radius: var(--dsw-radius-md); position: absolute; inset: 0; }
+            .yu-codex-speed-row:has(.yu-codex-speed-switch:focus-visible) { background: var(--dsw-alias-interactive-bg-hover); }
+            @media (hover: hover) { .yu-codex-speed-row:has(.yu-codex-speed-switch:not(:disabled)):hover { background: var(--dsw-alias-interactive-bg-hover); } }
+          `;
+          document.head.append(style);
+          return () => style.remove();
+        });
         ctx.effect(() => ctx.locale.register(packageName, dictionaries));
         await ctx.remote.$mount(remoteInfo);
         ctx.inject([`remote.${remoteName}`], scope => {

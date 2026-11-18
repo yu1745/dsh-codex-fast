@@ -38,9 +38,11 @@ test('sets priority only for Codex and preserves the prior payload hook', async 
 test('compiled client registers the Codex-only model options slot', async () => {
   let definition;
   runInNewContext(readFileSync(new URL('../client.js', import.meta.url), 'utf8'), {
+    document: { createElement: () => ({}), head: { append() {} } },
     window: { __ModuleLoader__: { load(value) { definition = value; } } },
   });
   const client = definition.factory(name => {
+    if (name === '@deepseek-ai/dsh-client-ui-primitives') return { Switch: Symbol('shared switch') };
     assert.equal(name, 'react');
     return { createElement: (type, props) => ({ type, props }), useSyncExternalStore: (_, read) => read() };
   });
