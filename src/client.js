@@ -3,19 +3,17 @@ import { isCodex, packageName, remoteName } from './shared.js';
 
 const slot = 'conversation.input.model.options';
 const dictionaries = {
-  en: { speed: 'Codex speed', normal: 'Normal', fast: 'Fast', loading: 'Loading Codex speed…', readFailed: 'Could not read Codex speed.', writeFailed: 'Could not change Codex speed.' },
-  zh: { speed: 'Codex 速度', normal: '普通', fast: '快速', loading: '正在读取 Codex 速度…', readFailed: '无法读取 Codex 速度。', writeFailed: '无法更改 Codex 速度。' },
+  en: { speed: 'Codex fast mode', loading: 'Loading Codex speed…', readFailed: 'Could not read Codex speed.', writeFailed: 'Could not change Codex speed.' },
+  zh: { speed: 'Codex 快速模式', loading: '正在读取 Codex 速度…', readFailed: '无法读取 Codex 速度。', writeFailed: '无法更改 Codex 速度。' },
 };
 
 window.__ModuleLoader__.load({
   id: packageName,
   factory(require) {
-    const { Fragment: ReactFragment, createElement: h, useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore } = require('react');
+    const { createElement: h, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } = require('react');
 
     function SpeedControl({ sessionId, api, locked, reportFailure, t }) {
-      const id = useId();
       const trigger = useRef(null);
-      const [expanded, setExpanded] = useState(false);
       const [classes, setClasses] = useState([]);
       useLayoutEffect(() => {
         const row = trigger.current?.closest('[role="menu"]')?.querySelector('button[role="menuitem"]');
@@ -41,7 +39,7 @@ window.__ModuleLoader__.load({
         if (busy || locked || mode === null) return;
         setBusy(true);
         try {
-          const result = await api.setFast(sessionId, next === 'fast');
+          const result = await api.setFast(sessionId, next);
           if (!result.ok) throw new Error(result.error?.message);
           if (mounted.current) setMode(result.value.mode);
         } catch (error) {
@@ -51,36 +49,26 @@ window.__ModuleLoader__.load({
         }
       }
 
-      const [rowClass, labelClass, valueClass, iconClass] = classes;
-      const current = mode === 'standard' ? 'normal' : 'fast';
-      function closeOptions() {
-        setExpanded(false);
-        trigger.current?.focus();
-      }
-      return h(ReactFragment, null,
-        h('button', {
-          ref: trigger, id, type: 'button', role: 'menuitem', className: rowClass,
-          'aria-expanded': expanded, 'aria-controls': expanded ? `${id}-options` : undefined,
-          onClick: () => setExpanded(value => !value),
-        }, h('span', { className: labelClass }, t('speed')),
-        h('span', { className: valueClass }, mode === null ? t(readFailed ? 'readFailed' : 'loading') : t(current)),
-        h('svg', { className: iconClass, width: 12, height: 12, viewBox: '0 0 12 12', 'aria-hidden': true,
-          style: expanded ? { transform: 'rotate(90deg)' } : undefined },
-        h('path', { d: 'm4.5 2.5 3.5 3.5-3.5 3.5', fill: 'none', stroke: 'currentColor', strokeLinecap: 'round', strokeLinejoin: 'round' }))),
-        expanded && mode !== null && h('div', {
-          id: `${id}-options`, role: 'group', 'aria-labelledby': id,
-          onKeyDown: event => {
-            if (event.key !== 'Escape' && event.key !== 'ArrowLeft') return;
-            event.preventDefault();
-            event.stopPropagation();
-            closeOptions();
-          },
-        }, ...['normal', 'fast'].map(option => h('button', {
-          key: option, type: 'button', role: 'menuitemradio', className: rowClass,
-          'aria-checked': current === option, disabled: locked || busy,
-          onClick: () => { if (current !== option) void select(option); closeOptions(); },
-        }, h('span', { className: labelClass, style: { paddingInlineStart: 12 } }, t(option)),
-        h('span', { className: valueClass, 'aria-hidden': true }, current === option ? '✓' : '')))));
+      const [rowClass, labelClass, valueClass] = classes;
+      const checked = mode === 'fast' || mode === 'ultrafast';
+      const blocked = locked || busy || mode === null;
+      return h('button', {
+        ref: trigger, type: 'button', role: 'switch', className: rowClass,
+        'aria-checked': checked, 'aria-disabled': blocked || undefined,
+        title: mode === null ? t(readFailed ? 'readFailed' : 'loading') : undefined,
+        onClick: () => { if (!blocked) void select(!checked); },
+      }, h('span', { className: labelClass }, t('speed')),
+      h('span', { className: valueClass, 'aria-hidden': true }),
+      h('span', {
+        'aria-hidden': true,
+        style: {
+          display: 'inline-flex', alignItems: 'center', flex: 'none',
+          width: 36, height: 20, padding: 2, boxSizing: 'border-box', borderRadius: 999,
+          background: checked ? 'var(--dsw-alias-label-primary, #202127)' : 'color-mix(in srgb, currentColor 15%, transparent)',
+          justifyContent: checked ? 'flex-end' : 'flex-start',
+          opacity: blocked ? 0.55 : 1,
+        },
+      }, h('span', { style: { width: 16, height: 16, borderRadius: '50%', background: 'var(--dsw-alias-background-primary, white)' } })));
     }
 
     function ModelOption({ directory, ...props }) {
