@@ -1,6 +1,6 @@
 {
   "name": "@yu1745/dsh-codex-fast",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Per-conversation Codex speed settings in the DSH model selector",
   "type": "module",
   "license": "MIT",
